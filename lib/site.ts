@@ -1,7 +1,7 @@
 export const site = {
   name: "AZ Ecom Solution",
   shortName: "AZEcom",
-  url: "https://azecomsolution.com",
+  url: "https://www.azecomsolution.com",
   tagline: "Your A–Z partner for selling on every marketplace, worldwide.",
   description:
     "AZ Ecom Solution is a full-service e-commerce agency. We launch, manage and scale brands on Amazon, Walmart, eBay, Etsy, Shopify, TikTok Shop, Noon, Daraz, Flipkart and 40+ marketplaces across the globe.",
