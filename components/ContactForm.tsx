@@ -5,7 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { Send, CheckCircle2 } from "lucide-react";
 import { services, site } from "@/lib/site";
 
-type Status = "idle" | "sending" | "sent" | "error";
+type Status = "idle" | "sending" | "sent";
 
 export function ContactForm() {
   const params = useSearchParams();
@@ -15,24 +15,28 @@ export function ContactForm() {
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const data = Object.fromEntries(new FormData(e.currentTarget)) as Record<string, string>;
+    if (data._honey) return setStatus("sent");
     setStatus("sending");
     try {
-      const res = await fetch("/api/contact", {
+      // Delivered by FormSubmit (https://formsubmit.co) straight from the browser — no account or key needed.
+      const res = await fetch(`https://formsubmit.co/ajax/${site.email}`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify({
+          ...data,
+          _subject: `New enquiry from ${data.name} — ${data.service || "General"}`,
+          _replyto: data.email,
+          _template: "table",
+          _captcha: "false",
+        }),
       });
-      if (res.ok) return setStatus("sent");
-      if (res.status >= 500) {
-        // Delivery failed: fall back to the visitor's mail app so the lead isn't lost.
-        const body = Object.entries(data).filter(([k]) => k !== "website").map(([k, v]) => `${k}: ${v}`).join("\n");
-        window.location.href = `mailto:${site.email}?subject=${encodeURIComponent("New enquiry — " + (data.service || "General"))}&body=${encodeURIComponent(body)}`;
-        return setStatus("sent");
-      }
-      setStatus("error");
-    } catch {
-      setStatus("error");
-    }
+      const result = await res.json().catch(() => null);
+      if (res.ok && String(result?.success) === "true") return setStatus("sent");
+    } catch {}
+    // Delivery failed: fall back to the visitor's mail app so the lead isn't lost.
+    const body = Object.entries(data).filter(([k]) => k !== "_honey").map(([k, v]) => `${k}: ${v}`).join("\n");
+    window.location.href = `mailto:${site.email}?subject=${encodeURIComponent("New enquiry — " + (data.service || "General"))}&body=${encodeURIComponent(body)}`;
+    setStatus("sent");
   }
 
   if (status === "sent") {
@@ -92,16 +96,11 @@ export function ContactForm() {
         <textarea name="message" required rows={5} className="field" />
       </label>
       {/* Honeypot for bots */}
-      <input name="website" tabIndex={-1} autoComplete="off" className="hidden" aria-hidden="true" />
+      <input name="_honey" tabIndex={-1} autoComplete="off" className="hidden" aria-hidden="true" />
       <div className="sm:col-span-2">
         <button type="submit" disabled={status === "sending"} className="btn-primary w-full sm:w-auto disabled:opacity-60">
           {status === "sending" ? "Sending…" : <>Send enquiry <Send className="size-4" /></>}
         </button>
-        {status === "error" && (
-          <p className="mt-3 text-sm text-red-600">
-            Something went wrong. Please email us directly at <a className="underline" href={`mailto:${site.email}`}>{site.email}</a>.
-          </p>
-        )}
       </div>
     </form>
   );
