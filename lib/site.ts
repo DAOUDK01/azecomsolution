@@ -6,7 +6,7 @@ export const site = {
   description:
     "AZ Ecom Solution is a full-service e-commerce agency. We launch, manage and scale brands on Amazon, Walmart, eBay, Etsy, Shopify, TikTok Shop, Noon, Daraz, Flipkart and 40+ marketplaces across the globe.",
   email: "info@azecomsolution.com",
-  phone: "+1 (000) 000-0000",
+  phone: "", // shown on the site only when set
   whatsapp: "",
   address: "Serving clients worldwide — remote-first team",
   hours: "Mon – Sat, 24/5 support across time zones",

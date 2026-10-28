@@ -1,9 +1,7 @@
 import { NextResponse } from "next/server";
+import { site } from "@/lib/site";
 
 const FIELDS = ["name", "email", "phone", "company", "service", "revenue", "marketplaces", "message"] as const;
-
-const escape = (s: string) =>
-  s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
 
 export async function POST(req: Request) {
   let body: Record<string, unknown>;
@@ -21,26 +19,29 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Name, a valid email and a message are required." }, { status: 400 });
   }
 
-  // Delivery uses Resend (https://resend.com). Set RESEND_API_KEY and CONTACT_TO_EMAIL in Vercel.
-  const apiKey = process.env.RESEND_API_KEY;
-  const to = process.env.CONTACT_TO_EMAIL;
-  if (!apiKey || !to) {
-    return NextResponse.json({ error: "Email delivery not configured" }, { status: 503 });
-  }
-
-  const html = FIELDS.map((f) => `<p><b>${f}:</b> ${escape(data[f] || "—")}</p>`).join("");
-  const res = await fetch("https://api.resend.com/emails", {
+  // Delivered by FormSubmit (https://formsubmit.co) — no account or key needed.
+  // CONTACT_TO_EMAIL can override the inbox; defaults to the public site email.
+  const to = process.env.CONTACT_TO_EMAIL || site.email;
+  const res = await fetch(`https://formsubmit.co/ajax/${encodeURIComponent(to)}`, {
     method: "POST",
-    headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+      Origin: site.url,
+      Referer: `${site.url}/contact`,
+    },
     body: JSON.stringify({
-      from: process.env.CONTACT_FROM_EMAIL || "AZ Ecom Solution <onboarding@resend.dev>",
-      to: [to],
-      reply_to: data.email,
-      subject: `New enquiry from ${data.name} — ${data.service || "General"}`,
-      html,
+      ...data,
+      _subject: `New enquiry from ${data.name} — ${data.service || "General"}`,
+      _replyto: data.email,
+      _template: "table",
+      _captcha: "false",
     }),
-  });
+  }).catch(() => null);
 
-  if (!res.ok) return NextResponse.json({ error: "Failed to send" }, { status: 502 });
+  const result = res && (await res.json().catch(() => null));
+  if (!res?.ok || (result && String(result.success) !== "true")) {
+    return NextResponse.json({ error: "Failed to send" }, { status: 502 });
+  }
   return NextResponse.json({ ok: true });
 }

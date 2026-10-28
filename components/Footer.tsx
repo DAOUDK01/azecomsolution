@@ -34,7 +34,7 @@ export function Footer() {
           <h3 className="text-sm font-semibold text-white">Get in touch</h3>
           <ul className="mt-4 space-y-3 text-sm">
             <li className="flex gap-2"><Mail className="size-4 shrink-0 text-accent-500" /><a className="hover:text-white" href={`mailto:${site.email}`}>{site.email}</a></li>
-            <li className="flex gap-2"><Phone className="size-4 shrink-0 text-accent-500" />{site.phone}</li>
+            {site.phone && <li className="flex gap-2"><Phone className="size-4 shrink-0 text-accent-500" />{site.phone}</li>}
             <li className="flex gap-2"><MapPin className="size-4 shrink-0 text-accent-500" />{site.address}</li>
           </ul>
         </div>

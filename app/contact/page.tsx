@@ -26,7 +26,7 @@ export default function ContactPage() {
             { icon: Phone, label: "Phone", value: site.phone },
             { icon: Clock, label: "Hours", value: site.hours },
             { icon: Globe, label: "Location", value: site.address },
-          ].map((c) => (
+          ].filter((c) => c.value).map((c) => (
             <div key={c.label} className="flex gap-4 rounded-2xl border border-slate-200 p-5">
               <div className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand-600">
                 <c.icon className="size-5" />

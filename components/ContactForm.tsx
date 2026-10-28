@@ -23,9 +23,9 @@ export function ContactForm() {
         body: JSON.stringify(data),
       });
       if (res.ok) return setStatus("sent");
-      if (res.status === 503) {
-        // No email provider configured: fall back to the visitor's mail app.
-        const body = Object.entries(data).map(([k, v]) => `${k}: ${v}`).join("\n");
+      if (res.status >= 500) {
+        // Delivery failed: fall back to the visitor's mail app so the lead isn't lost.
+        const body = Object.entries(data).filter(([k]) => k !== "website").map(([k, v]) => `${k}: ${v}`).join("\n");
         window.location.href = `mailto:${site.email}?subject=${encodeURIComponent("New enquiry — " + (data.service || "General"))}&body=${encodeURIComponent(body)}`;
         return setStatus("sent");
       }
