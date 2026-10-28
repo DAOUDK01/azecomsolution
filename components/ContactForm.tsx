@@ -18,20 +18,12 @@ export function ContactForm() {
     if (data._honey) return setStatus("sent");
     setStatus("sending");
     try {
-      // Delivered by FormSubmit (https://formsubmit.co) straight from the browser — no account or key needed.
-      const res = await fetch(`https://formsubmit.co/ajax/${site.email}`, {
+      const res = await fetch("/api/contact", {
         method: "POST",
-        headers: { "Content-Type": "application/json", Accept: "application/json" },
-        body: JSON.stringify({
-          ...data,
-          _subject: `New enquiry from ${data.name} — ${data.service || "General"}`,
-          _replyto: data.email,
-          _template: "table",
-          _captcha: "false",
-        }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
       });
-      const result = await res.json().catch(() => null);
-      if (res.ok && String(result?.success) === "true") return setStatus("sent");
+      if (res.ok) return setStatus("sent");
     } catch {}
     // Delivery failed: fall back to the visitor's mail app so the lead isn't lost.
     const body = Object.entries(data).filter(([k]) => k !== "_honey").map(([k, v]) => `${k}: ${v}`).join("\n");
